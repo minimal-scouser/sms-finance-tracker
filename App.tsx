@@ -13,10 +13,9 @@ import {
 import {getBankNames} from './BankFormats';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-
 import Details from './components/Details';
-
 import {BankAccount} from './Interfaces/BankAccount';
+// import {simplifyMessage, getTypeOfTransaction} from "./utils/MessageParser";
 
 import SmsAndroid from 'react-native-get-sms-android';
 
@@ -336,7 +335,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     padding: 10,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#eeeded',
   },
 });
 
