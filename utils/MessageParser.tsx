@@ -87,7 +87,7 @@ function removeItemAll(arr: Array, value: string) {
   return arr;
 }
 
-function getBalance(message) {
+export function getBalance(message) {
   for (const word of balanceKeywords) {
     if (message.includes(word)) {
       const words = message.split(" ");

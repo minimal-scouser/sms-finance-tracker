@@ -1,16 +1,13 @@
 import React, {useState} from 'react';
-import {
-  FlatList,
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {BankAccount} from '../Interfaces/BankAccount';
-import {getAccount, getMoney, getTypeOfTransaction, simplifyMessage} from "../utils/MessageParser";
-import {getBankNames} from "../BankFormats";
+import {
+  getBalance,
+  getMoney,
+  getTypeOfTransaction,
+  simplifyMessage,
+} from '../utils/MessageParser';
+// import {getBankNames} from '../BankFormats';
 
 export default function Details({route, navigation}) {
   const accountInfo: BankAccount = route.params.accountInfo;
@@ -69,35 +66,64 @@ export default function Details({route, navigation}) {
   }
 
   function Transaction(x) {
-
     const message = simplifyMessage(x.item.message);
-    const accountNo = getAccount(message).no
     const typeOfTrn = getTypeOfTransaction(message);
-    
+    const amount = getMoney(message);
 
-    return (
+    // Invalid trns will not be shown as they dont have any credited or debited info.
+    // They are most likely balance alerts
+    return amount.includes('could not') === false ? (
       <View style={styles.item}>
-        <Text style={[typeOfTrn === "credited" ? styles.credited : styles.debited]}>&#8377; {getMoney(message)}</Text>
+        <Text
+          style={[typeOfTrn === 'credited' ? styles.credited : styles.debited]}>
+          &#8377; {amount}
+        </Text>
         <View>
           {/* <Image source={{ uri: getBankNames(x.item.address) }} style={{ width: 30 }}/> */}
           <Text>{new Date(x.item.dateSent).toDateString()}</Text>
         </View>
       </View>
-    );
+    ) : null;
+  }
+
+  // An invalid trn is something that does not have an amount that is either credited or debited
+  // A balance alert cannot be determined as a valid transaction. It is an aler.
+  // The validity of a trn is on the basis of "amount" field that we gather from the message body
+  function checkForInvalidTransactions(x: Array<any>) {
+    const areInvalid = x.every((item) => {
+      // console.log("message", item.message);
+      
+      const formattedMessage = simplifyMessage(item.message);
+      const amount = getMoney(formattedMessage);
+
+      // when no trn is
+      if (amount.includes('could not')) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+    return areInvalid;
   }
 
   return (
-    <View>
-      <SafeAreaView>
-        {/* <HighlightTransaction /> */}
-        <Text style={{ padding: 20, fontSize: 20 }}>{accountInfo.acNo}</Text>
+    <View style={{ flex: 1, flexDirection: "column"}}>
+      <Text style={{marginLeft: 20, marginTop: 10}}>
+        Account No: {accountInfo.acNo}
+      </Text>
+      <Text style={{marginLeft: 20, marginTop: 5}}>
+        Balance: {accountInfo.balance}
+      </Text>
+      {checkForInvalidTransactions(accountInfo.allMessages) ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", height: 100, opacity: .5 }}><Text>No Valid Transactions</Text></View>
+      ) : (
         <FlatList
           data={accountInfo.allMessages}
-          // renderItem={Message}
           renderItem={Transaction}
           keyExtractor={(item) => String(item.id)}
         />
-      </SafeAreaView>
+      )}
     </View>
   );
 }
@@ -139,12 +165,14 @@ const styles = StyleSheet.create({
   },
   credited: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "green"
+    fontWeight: '700',
+    color: 'green',
+    marginBottom: 10,
   },
   debited: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#ed6663"
-  }
+    fontWeight: '700',
+    color: '#ee6f57',
+    marginBottom: 10,
+  },
 });
